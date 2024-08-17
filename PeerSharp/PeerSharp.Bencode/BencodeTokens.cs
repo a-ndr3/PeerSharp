@@ -26,7 +26,7 @@ public class BencodeString(byte[] data) : BencodeToken
 
     public readonly string Value = Encoding.UTF8.GetString(data);
 
-    public static implicit operator string(BencodeString str) => str.Value;
+    public static implicit operator string?(BencodeString? str) => str?.Value;
 }
 
 public class BencodeInt(long value) : BencodeToken
