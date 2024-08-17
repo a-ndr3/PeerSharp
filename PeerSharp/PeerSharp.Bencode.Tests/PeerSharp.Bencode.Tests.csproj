@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PeerSharp.Bencode\PeerSharp.Bencode.csproj" />
+    <ProjectReference Include="..\PeerSharp.TestsUtils\PeerSharp.TestsUtils.csproj" />
   </ItemGroup>
 
   <ItemGroup>

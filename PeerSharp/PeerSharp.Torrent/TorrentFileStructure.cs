@@ -1,5 +1,4 @@
 ﻿using PeerSharp.Bencode.Tokens;
-using System.Linq;
 using System.Text;
 
 namespace PeerSharp.Torrent
@@ -28,6 +27,7 @@ namespace PeerSharp.Torrent
             {
                 public List<string> Path { get; set; } = path;
                 public long Length { get; set; } = length;
+                public string NormalizedPath => string.Join('\\', Path);
             }
         }
 

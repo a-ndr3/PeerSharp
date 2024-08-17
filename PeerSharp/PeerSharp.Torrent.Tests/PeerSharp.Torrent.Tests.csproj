@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PeerSharp.TestsUtils\PeerSharp.TestsUtils.csproj" />
     <ProjectReference Include="..\PeerSharp.Torrent\PeerSharp.Torrent.csproj" />
   </ItemGroup>
 

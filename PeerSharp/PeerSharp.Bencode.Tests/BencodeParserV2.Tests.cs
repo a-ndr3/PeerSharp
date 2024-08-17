@@ -1,33 +1,30 @@
 using PeerSharp.Bencode.Tokens;
+using PeerSharp.TestsUtils;
 using Xunit.Sdk;
 
 namespace PeerSharp.Bencode.Tests
 {
     public class BencodeParserV2_Tests
     {
-        private const string filepath = @"C://test.torrent";
         private readonly BencodeDictionary testData;
-
-        private static Stream TestFileStream => File.Open(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
         public BencodeParserV2_Tests()
         {
-            this.testData = (BencodeDictionary)BencodeParserV2.Parse(TestFileStream);
+            this.testData = (BencodeDictionary)BencodeParserV2.Parse(TestData.test_Aligment_256_P256_470);
         }
 
         [Fact]
         public void CanOpenFileCorrectly()
         {
             BencodeAssert.IsTypeOfDictionary(testData);
-            Assert.Equal(9, testData.Count);
-            Assert.Equal("UTF-8", testData["encoding"] as BencodeString);
+            Assert.Equal(7, testData.Count);
 
             BencodeAssert.IsTypeOfDictionary(testData["info"]);
             var info = (BencodeDictionary)testData["info"];
 
             BencodeAssert.IsTypeOfList(info["files"]);
             var files = (BencodeList)info["files"];
-            Assert.Equal(10, files.Count);
+            Assert.Equal(13, files.Count);
         }
     }
 
