@@ -2,7 +2,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-
 namespace PeerSharp.Bencode;
 
 public abstract class BencodeToken
@@ -19,40 +18,31 @@ public abstract class BencodeToken
     }
 }
 
-public class BencodeString(string value) : BencodeToken
+public class BencodeString(byte[] data) : BencodeToken
 {
     public override TokenType Type { get; } = TokenType.String;
-    public string Value { get; } = value;
+
+    public byte[] Data { get; } = data;
+
+    public readonly string Value = Encoding.UTF8.GetString(data);
 
     public static implicit operator string(BencodeString str) => str.Value;
 }
 
-//public class BencodeString(byte[] data) : BencodeToken
-//{
-//    public override TokenType Type { get; } = TokenType.String;
-//    public byte[] Data { get; } = data;
-
-//    public static implicit operator string(BencodeString str) => str.ToString();
-
-//    private string? stringValue = null;
-//    public override string ToString()
-//    {
-//        stringValue ??= Encoding.UTF8.GetString(Data);
-//        return stringValue;
-//    }
-//}
-
 public class BencodeInt(long value) : BencodeToken
 {
     public override TokenType Type { get; } = TokenType.Integer;
+
     public long Value => value;
+
     public static implicit operator long(BencodeInt val) => val.Value;
 }
 
 public class BencodeDictionary : BencodeToken, IDictionary<string, BencodeToken>
 {
     public override TokenType Type { get; } = TokenType.Dictionary;
-    private Dictionary<string, BencodeToken> dict = new();
+
+    private readonly Dictionary<string, BencodeToken> dict = [];
 
     public BencodeToken this[string key] { get => dict[key]; set => dict[key] = value; }
 
@@ -90,7 +80,8 @@ public class BencodeDictionary : BencodeToken, IDictionary<string, BencodeToken>
 public class BencodeList : BencodeToken, IList<BencodeToken>
 {
     public override TokenType Type { get; } = TokenType.List;
-    private List<BencodeToken> list = new();
+
+    private readonly List<BencodeToken> list = [];
 
     public BencodeToken this[int index] { get => list[index]; set => list[index] = value; }
 

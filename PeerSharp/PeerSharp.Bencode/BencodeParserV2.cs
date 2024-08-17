@@ -9,14 +9,13 @@ public class BencodeParserV2
 
     public static BencodeToken Parse(Stream stream)
     {
-        using var sr = new StreamReader(stream, Encoding.UTF8);
+        using var sr = new BencodeStreamReader(stream);
         return ParseInternal(sr);
     }
 
-    public static BencodeToken ParseInternal(StreamReader stream)
+    private static BencodeToken ParseInternal(BencodeStreamReader stream)
     {
-        var prefix = 0;
-
+        int prefix;
         while ((prefix = stream.Peek()) >= 0)
         {
             var type = (char)prefix;
@@ -30,18 +29,18 @@ public class BencodeParserV2
                     if (char.IsDigit(type))
                         return ParseString(stream);
                     else
-                        throw new NotSupportedException($"Unknown bencode type '{type}'[{prefix}] at {stream.GetPosition()}");
+                        throw new NotSupportedException($"Unknown bencode type '{type}'[{prefix}] at {stream.Position}");
             }
         }
 
         throw new EndOfStreamException("Unexpected end of stream while parsing tokens");
     }
 
-    private static BencodeDictionary ParseDictionary(StreamReader stream)
+    private static BencodeDictionary ParseDictionary(BencodeStreamReader stream)
     {
         var prefix = stream.Read();
         if (prefix != 'd')
-            throw new InvalidDataException($"Unexpected token for Dictionary at '{stream.GetPosition()}'");
+            throw new InvalidDataException($"Unexpected token for Dictionary at '{stream.Position}'");
 
         var result = new BencodeDictionary();
         while (true)
@@ -56,8 +55,6 @@ public class BencodeParserV2
             }
 
             var key = ParseString(stream);
-            if (key == "pieces")
-            {}
             var value = ParseInternal(stream);
             result.Add(key, value);
         }
@@ -65,7 +62,7 @@ public class BencodeParserV2
         return result;
     }
 
-    private static BencodeString ParseString(StreamReader stream)
+    private static BencodeString ParseString(BencodeStreamReader stream)
     {
         var length = 0;
         int digit;
@@ -75,28 +72,24 @@ public class BencodeParserV2
             Exceptions.ThrowIfEoF(stream);
 
             if (!char.IsDigit((char)digit))
-                throw new InvalidDataException($"Invalid string length at '{stream.GetPosition()}'");
+                throw new InvalidDataException($"Invalid string length at '{stream.Position}'");
 
             length = length * 10 + (digit - '0');
         }
 
-        var buffer = new char[length];
+        var buffer = new byte[length];
         var read = stream.Read(buffer, 0, length);
-        return new BencodeString(new string(buffer));
 
-        //var buffer = new byte[length];
-        //var read = stream.BaseStream.Read(buffer, 0, length);
+        Exceptions.ThrowIfEoF(read != length, $"Unexpected end of stream while reading string");
 
-        //Exceptions.ThrowIfEoF(read != length, $"Unexpected end of stream while reading string");
-
-        //return new BencodeString(buffer);
+        return new BencodeString(buffer);
     }
 
-    private static BencodeInt ParseInteger(StreamReader stream)
+    private static BencodeInt ParseInteger(BencodeStreamReader stream)
     {
         var prefix = stream.Read();
         if (prefix != 'i')
-            throw new InvalidDataException($"Unexpected token for Integer at '{stream.GetPosition()}'");
+            throw new InvalidDataException($"Unexpected token for Integer at '{stream.Position}'");
 
         var value = 0;
         int digit;
@@ -108,7 +101,7 @@ public class BencodeParserV2
         if (possibleSign == '-' || possibleSign == '+')
             stream.Read(); // read sign
         if (possibleSign == '0')
-            throw new InvalidDataException($"Invalid leading zero in integer at '{stream.GetPosition()}'");
+            throw new InvalidDataException($"Invalid leading zero in integer at '{stream.Position}'");
 
         while ((digit = stream.Read()) != endOfObject)
         {
@@ -116,7 +109,7 @@ public class BencodeParserV2
             Exceptions.ThrowIfEoF(stream);
 
             if (!char.IsDigit((char)digit))
-                throw new InvalidDataException($"Invalid integer at '{stream.GetPosition()}'");
+                throw new InvalidDataException($"Invalid integer at '{stream.Position}'");
 
             value = value * 10 + (digit - '0');
         }
@@ -124,11 +117,11 @@ public class BencodeParserV2
         return new BencodeInt(value * (negative ? -1 : 1));
     }
 
-    private static BencodeList ParseList(StreamReader stream)
+    private static BencodeList ParseList(BencodeStreamReader stream)
     {
         var prefix = stream.Read();
         if (prefix != 'l')
-            throw new InvalidDataException($"Unexpected token for List at '{stream.GetPosition()}'");
+            throw new InvalidDataException($"Unexpected token for List at '{stream.Position}'");
 
         var result = new BencodeList();
         while (true)
@@ -150,42 +143,25 @@ public class BencodeParserV2
     }
 }
 
-public static class Exceptions
+internal static class Exceptions
 {
-    public static void ThrowIfEoF(StreamReader stream, string? message = null) => ThrowIf<EndOfStreamException>(stream.EndOfStream, message ?? $"Unexpected end of stream at '{stream.GetPosition()}'");
-    public static void ThrowIfEoF(int readByte, string? message = null) => ThrowIf<EndOfStreamException>(readByte < 0, message ?? $"Unexpected end of stream");
+    public static void ThrowIfEoF(BencodeStreamReader stream, string? message = null) => ThrowIf<EndOfStreamException>(stream.EndOfStream, message ?? $"Unexpected end of stream at '{stream.Position}'");
+    public static void ThrowIfEoF(int readByte, string? message = null) => ThrowIf<EndOfStreamException>(readByte < 1, message ?? $"Unexpected end of stream");
     public static void ThrowIfEoF(bool condition, string? message = null) => ThrowIf<EndOfStreamException>(condition, message ?? $"Unexpected end of stream");
 
     private static void ThrowIf<T>(bool condition, string message) where T : Exception, new()
     {
         if (!condition)
             return;
-
+        T exception;
         try
         {
-            throw Activator.CreateInstance(typeof(T), message) as T;
+            exception = Activator.CreateInstance(typeof(T), message) as T ?? new T();
         }
-        catch (MissingMethodException ex)
+        catch (MissingMethodException)
         {
-            throw new T();
+            exception = new T();
         }
-    }
-}
-
-public static class StreamExtensions
-{
-    public static int GetPosition(this StreamReader s)
-    {
-        Int32 charpos = (Int32)s.GetType().InvokeMember("_charPos",
-            BindingFlags.DeclaredOnly |
-            BindingFlags.Public | BindingFlags.NonPublic |
-            BindingFlags.Instance | BindingFlags.GetField
-        , null, s, null);
-        Int32 charlen = (Int32)s.GetType().InvokeMember("_charLen",
-            BindingFlags.DeclaredOnly |
-            BindingFlags.Public | BindingFlags.NonPublic |
-            BindingFlags.Instance | BindingFlags.GetField
-        , null, s, null);
-        return (Int32)s.BaseStream.Position - charlen + charpos;
+        throw exception;
     }
 }
