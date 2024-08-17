@@ -4,13 +4,13 @@ namespace PeerSharp.Torrent
 {
     public class TorrentFileStructure
     {
-        public String Announce { get; set; }
+        public string Announce { get; set; }
 
-        public List<String> AnnounceList { get; set; } = new List<String>();
+        public List<string> AnnounceList { get; set; } = new List<string>();
 
-        public String Comment { get; set; }
+        public string Comment { get; set; }
 
-        public String CreatedBy { get; set; }
+        public string CreatedBy { get; set; }
 
         public long CreationDate { get; set; }
 
@@ -18,7 +18,7 @@ namespace PeerSharp.Torrent
 
         public TorrentFileInfo Info { get; set; }
 
-        public String Publisher { get; set; }
+        public string Publisher { get; set; }
 
         public Uri PublisherURL { get; set; }
 
