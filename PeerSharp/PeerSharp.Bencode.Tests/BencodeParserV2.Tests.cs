@@ -1,3 +1,4 @@
+using PeerSharp.Bencode.Tokens;
 using Xunit.Sdk;
 
 namespace PeerSharp.Bencode.Tests

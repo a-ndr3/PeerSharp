@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-namespace PeerSharp.Bencode;
+namespace PeerSharp.Bencode.Tokens;
 
 public abstract class BencodeToken
 {
@@ -108,4 +108,19 @@ public class BencodeList : BencodeToken, IList<BencodeToken>
     public void RemoveAt(int index) => list.RemoveAt(index);
 
     IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
+}
+
+public static class BencodeHelpers
+{
+    public static BencodeString AsString(this BencodeToken token) => token.AsType<BencodeString>(BencodeToken.TokenType.String);
+    public static BencodeDictionary AsDictionary(this BencodeToken token) => token.AsType<BencodeDictionary>(BencodeToken.TokenType.Dictionary);
+    public static BencodeList AsList(this BencodeToken token) => token.AsType<BencodeList>(BencodeToken.TokenType.List);
+    public static BencodeInt AsInteger(this BencodeToken token) => token.AsType<BencodeInt>(BencodeToken.TokenType.Integer);
+
+    internal static T AsType<T>(this BencodeToken token, BencodeToken.TokenType type) where T : BencodeToken
+    {
+        if (token.Type != type || token is not T)
+            throw new ArgumentException($"Token is not of type {nameof(T)}");
+        return (T)token;
+    }
 }

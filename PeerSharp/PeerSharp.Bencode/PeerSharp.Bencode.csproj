@@ -7,8 +7,4 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\PeerSharp.Torrent\PeerSharp.Torrent.csproj" />
-  </ItemGroup>
-
 </Project>
