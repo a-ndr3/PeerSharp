@@ -31,6 +31,12 @@ namespace PeerSharp.Torrent
             }
         }
 
+        public static TorrentFileStructure Load(string filepath)
+        {
+            using var stream = File.OpenRead(filepath);
+            return Load(stream);
+        }
+
         public static TorrentFileStructure Load(Stream stream)
         {
             var torrent = new TorrentFileStructure();
