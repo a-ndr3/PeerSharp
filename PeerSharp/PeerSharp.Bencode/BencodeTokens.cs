@@ -7,6 +7,7 @@ namespace PeerSharp.Bencode.Tokens;
 public abstract class BencodeToken
 {
     public abstract TokenType Type { get; }
+    public ArraySegment<byte> MemorySegment { get; set; }
 
     public enum TokenType
     {

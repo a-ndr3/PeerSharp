@@ -37,6 +37,7 @@ public class BencodeParserV2
 
     private static BencodeDictionary ParseDictionary(BencodeStreamReader stream)
     {
+        var memoryPosition = stream.Position;
         var prefix = stream.Read();
         if (prefix != 'd')
             throw new InvalidDataException($"Unexpected token for Dictionary at '{stream.Position}'");
@@ -58,11 +59,13 @@ public class BencodeParserV2
             result.Add(key, value);
         }
 
+        result.MemorySegment = GetSegment(stream, memoryPosition);
         return result;
     }
 
     private static BencodeString ParseString(BencodeStreamReader stream)
     {
+        var memoryPosition = stream.Position;
         var length = 0;
         int digit;
         while ((digit = stream.Read()) != ':')
@@ -80,12 +83,13 @@ public class BencodeParserV2
         var read = stream.Read(buffer, 0, length);
 
         Exceptions.ThrowIfEoF(read != length, $"Unexpected end of stream while reading string");
-
-        return new BencodeString(buffer);
+        var segment = GetSegment(stream, memoryPosition);
+        return new BencodeString(buffer) { MemorySegment = segment };
     }
 
     private static BencodeInt ParseInteger(BencodeStreamReader stream)
     {
+        var memoryPosition = stream.Position;
         var prefix = stream.Read();
         if (prefix != 'i')
             throw new InvalidDataException($"Unexpected token for Integer at '{stream.Position}'");
@@ -113,11 +117,13 @@ public class BencodeParserV2
             value = value * 10 + (digit - '0');
         }
 
-        return new BencodeInt(value * (negative ? -1 : 1));
+        var segment = GetSegment(stream, memoryPosition);
+        return new BencodeInt(value * (negative ? -1 : 1)) { MemorySegment = segment };
     }
 
     private static BencodeList ParseList(BencodeStreamReader stream)
     {
+        var memoryPosition = stream.Position;
         var prefix = stream.Read();
         if (prefix != 'l')
             throw new InvalidDataException($"Unexpected token for List at '{stream.Position}'");
@@ -138,8 +144,11 @@ public class BencodeParserV2
             result.Add(value);
         }
 
+        result.MemorySegment = GetSegment(stream, memoryPosition);
         return result;
     }
+
+    private static ArraySegment<byte> GetSegment(BencodeStreamReader stream, long previousPos) => stream.GetSegment((int)previousPos, (int)(stream.Position - previousPos));
 }
 
 internal static class Exceptions

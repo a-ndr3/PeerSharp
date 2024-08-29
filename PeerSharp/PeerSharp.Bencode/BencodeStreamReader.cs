@@ -1,7 +1,18 @@
 ﻿namespace PeerSharp.Bencode
 {
-    internal class BencodeStreamReader(Stream stream) : IDisposable
+    internal class BencodeStreamReader : IDisposable
     {
+        private readonly Stream stream;
+        private readonly byte[] bytes;
+
+        public BencodeStreamReader(Stream stream)
+        {
+            bytes = new byte[stream.Length];
+            var read = stream.Read(bytes, 0, (int)stream.Length);
+            if (read != stream.Length) throw new Exception("meh");
+            this.stream = new MemoryStream(bytes);
+        }
+
         public char Peek()
         {
             var value = stream.ReadByte();
@@ -27,6 +38,8 @@
                 return (char)buffer[0];
             }
         }
+
+        public ArraySegment<byte> GetSegment(int offset, int count) => new(bytes, offset, count);
 
         public void Dispose() => stream.Dispose();
     }
