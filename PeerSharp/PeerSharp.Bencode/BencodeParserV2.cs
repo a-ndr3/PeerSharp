@@ -104,7 +104,12 @@ public class BencodeParserV2
         if (possibleSign == '-' || possibleSign == '+')
             stream.Read(); // read sign
         if (possibleSign == '0')
-            throw new InvalidDataException($"Invalid leading zero in integer at '{stream.Position}'");
+        {
+            stream.Read(); // read zero
+            value = 0;
+            if (stream.Peek() != 'e')
+                throw new InvalidDataException($"Invalid leading zero in integer at '{stream.Position - 1}'");
+        }
 
         while ((digit = stream.Read()) != endOfObject)
         {
