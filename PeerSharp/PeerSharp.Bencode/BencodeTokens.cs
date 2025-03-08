@@ -75,6 +75,8 @@ public class BencodeDictionary : BencodeToken, IDictionary<string, BencodeToken>
 
     public bool TryGetValue(string key, [MaybeNullWhen(false)] out BencodeToken value) => dict.TryGetValue(key, out value);
 
+    public BencodeToken? GetOrDefault(string key) => dict.ContainsKey(key) ? this[key] : default;
+
     IEnumerator IEnumerable.GetEnumerator() => dict.GetEnumerator();
 }
 

@@ -21,7 +21,7 @@ namespace PeerSharp.Torrent
             public long PieceLength { get; set; }
             public List<byte[]> Pieces { get; set; } = [];
             public long Length { get; set; }
-            public List<FileInfo> Files { get; set; } = [];
+            public List<FileInfo>? Files { get; set; } = [];
 
             public class FileInfo(List<string> path, long length)
             {
@@ -92,7 +92,7 @@ namespace PeerSharp.Torrent
                 PieceLength = infoDict["piece length"]?.AsInteger(),
                 Length = infoDict.ContainsKey("length") ? infoDict["length"].AsInteger() : 0,
                 Pieces = DecodePieces(infoDict["pieces"].AsString()),
-                Files = infoDict["files"].AsList()
+                Files = infoDict.GetOrDefault("files")?.AsList()
                     .Select(x => {
                         var file = x.AsDictionary();
                         var path = file["path"].AsList();

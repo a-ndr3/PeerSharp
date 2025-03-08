@@ -22,13 +22,14 @@ namespace PeerSharp.Torrent.Tests
 
             var builder = new UriBuilder(url);
             var query = HttpUtility.ParseQueryString(builder.Query);
-            query["peer_id"] = "asdfasdf-asdfasdf-12";
+            query["peer_id"] = "peer-sharp-000000000";
             query["port"] = "6881";
             query["uploaded"] = "0";
             query["downloaded"] = "0";
             query["left"] = "0";
             query["event"] = "started";
-            query["compact"] = "1";
+            query["numwant"] = "50";
+            query["compact"] = "0";
             builder.Query = query.ToString();
             var finalUri = builder.ToString() + $"&info_hash={hashString}";
 
